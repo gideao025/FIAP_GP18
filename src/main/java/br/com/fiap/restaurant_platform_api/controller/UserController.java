@@ -57,4 +57,9 @@ public class UserController {
         userService.updatePassword(id, password);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<Boolean> login(@RequestParam String login, @RequestParam String password) {
+        return ResponseEntity.ok(userService.validateLogin(login, password));
+    }
 }

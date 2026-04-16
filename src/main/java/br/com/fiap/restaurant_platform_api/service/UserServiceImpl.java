@@ -70,4 +70,9 @@ public class UserServiceImpl implements UserService {
 
         userRepository.save(user);
     }
+
+    @Override
+    public boolean validateLogin(String login, String password) {
+        return userRepository.findByLoginAndPassword(login, password).isPresent();
+    }
 }

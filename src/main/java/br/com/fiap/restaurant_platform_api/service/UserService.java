@@ -19,4 +19,6 @@ public interface UserService {
     List<User> searchUsersByName(String name);
 
     void updatePassword(Long id, String password);
+
+    boolean validateLogin(String login, String password);
 }
