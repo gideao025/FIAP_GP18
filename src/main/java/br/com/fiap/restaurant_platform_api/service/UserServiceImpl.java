@@ -54,4 +54,9 @@ public class UserServiceImpl implements UserService {
 
         userRepository.delete(user);
     }
+
+    @Override
+    public List<User> searchUsersByName(String name) {
+        return userRepository.findByNameContainingIgnoreCase(name);
+    }
 }
