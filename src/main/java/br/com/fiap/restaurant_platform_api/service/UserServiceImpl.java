@@ -59,4 +59,15 @@ public class UserServiceImpl implements UserService {
     public List<User> searchUsersByName(String name) {
         return userRepository.findByNameContainingIgnoreCase(name);
     }
+
+    @Override
+    public void updatePassword(Long id, String password) {
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setPassword(password);
+
+        userRepository.save(user);
+    }
 }

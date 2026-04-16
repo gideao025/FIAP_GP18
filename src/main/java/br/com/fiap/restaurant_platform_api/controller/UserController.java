@@ -51,4 +51,10 @@ public class UserController {
     public ResponseEntity<List<User>> searchUsers(@RequestParam String name) {
         return ResponseEntity.ok(userService.searchUsersByName(name));
     }
+
+    @PutMapping("/{id}/password")
+    public ResponseEntity<Void> updatePassword(@PathVariable Long id, @RequestBody String password) {
+        userService.updatePassword(id, password);
+        return ResponseEntity.noContent().build();
+    }
 }
