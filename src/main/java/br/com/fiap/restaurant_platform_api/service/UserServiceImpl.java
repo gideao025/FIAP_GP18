@@ -5,6 +5,8 @@ import br.com.fiap.restaurant_platform_api.entity.User;
 import br.com.fiap.restaurant_platform_api.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -23,5 +25,10 @@ public class UserServiceImpl implements UserService {
     public User getUserById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    @Override
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
     }
 }

@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/users")
 public class UserController {
@@ -27,5 +29,10 @@ public class UserController {
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         User user = userService.getUserById(id);
         return ResponseEntity.ok(user); //todo change later
+    }
+
+    @GetMapping
+    public ResponseEntity<List<User>> getAllUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
     }
 }
