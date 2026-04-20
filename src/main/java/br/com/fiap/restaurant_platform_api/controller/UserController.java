@@ -1,5 +1,7 @@
 package br.com.fiap.restaurant_platform_api.controller;
 
+import br.com.fiap.restaurant_platform_api.dto.LoginRequest;
+import br.com.fiap.restaurant_platform_api.dto.PasswordRequest;
 import br.com.fiap.restaurant_platform_api.entity.User;
 import br.com.fiap.restaurant_platform_api.service.UserService;
 import org.springframework.http.HttpStatus;
@@ -9,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/v1/users")
 public class UserController {
 
     private final UserService userService;
@@ -52,14 +54,17 @@ public class UserController {
         return ResponseEntity.ok(userService.searchUsersByName(name));
     }
 
-    @PutMapping("/{id}/password")
-    public ResponseEntity<Void> updatePassword(@PathVariable Long id, @RequestBody String password) {
-        userService.updatePassword(id, password);
+    @PatchMapping("/{id}/password")
+    public ResponseEntity<Void> updatePassword(@PathVariable Long id,
+                                               @RequestBody PasswordRequest request) {
+        userService.updatePassword(id, request.getPassword());
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Boolean> login(@RequestParam String login, @RequestParam String password) {
-        return ResponseEntity.ok(userService.validateLogin(login, password));
+    public ResponseEntity<Boolean> login(@RequestBody LoginRequest request) {
+        return ResponseEntity.ok(
+                userService.validateLogin(request.getLogin(), request.getPassword())
+        );
     }
 }
