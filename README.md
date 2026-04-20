@@ -4,8 +4,6 @@
 
 REST API for managing users in a restaurant platform.
 
-Developed by **Victor Mazzola** as part of the FIAP Tech Challenge.
-
 ---
 
 ## 🚀 Technologies
