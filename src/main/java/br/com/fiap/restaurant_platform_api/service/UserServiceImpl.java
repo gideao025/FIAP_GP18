@@ -1,7 +1,9 @@
 package br.com.fiap.restaurant_platform_api.service;
 
-
 import br.com.fiap.restaurant_platform_api.entity.User;
+import br.com.fiap.restaurant_platform_api.exception.EmailAlreadyExistsException;
+import br.com.fiap.restaurant_platform_api.exception.InvalidCredentialsException;
+import br.com.fiap.restaurant_platform_api.exception.ResourceNotFoundException;
 import br.com.fiap.restaurant_platform_api.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +22,7 @@ public class UserServiceImpl implements UserService {
     public User createUser(User user) {
 
         if (userRepository.existsByEmail(user.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new EmailAlreadyExistsException("Email already exists");
         }
 
         return userRepository.save(user);
@@ -29,7 +31,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User getUserById(Long id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     @Override
@@ -41,7 +43,7 @@ public class UserServiceImpl implements UserService {
     public User updateUser(Long id, User updatedUser) {
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         user.setName(updatedUser.getName());
         user.setEmail(updatedUser.getEmail());
@@ -55,7 +57,7 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(Long id) {
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         userRepository.delete(user);
     }
@@ -69,7 +71,7 @@ public class UserServiceImpl implements UserService {
     public void updatePassword(Long id, String password) {
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         user.setPassword(password);
 
@@ -78,6 +80,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean validateLogin(String login, String password) {
-        return userRepository.findByLoginAndPassword(login, password).isPresent();
+
+        userRepository.findByLoginAndPassword(login, password)
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid login or password"));
+
+        return true;
     }
 }
