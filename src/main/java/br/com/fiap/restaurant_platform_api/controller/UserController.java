@@ -2,6 +2,7 @@ package br.com.fiap.restaurant_platform_api.controller;
 
 import br.com.fiap.restaurant_platform_api.dto.LoginRequest;
 import br.com.fiap.restaurant_platform_api.dto.PasswordRequest;
+import br.com.fiap.restaurant_platform_api.dto.UserResponse;
 import br.com.fiap.restaurant_platform_api.entity.User;
 import br.com.fiap.restaurant_platform_api.service.UserService;
 import org.springframework.http.HttpStatus;
@@ -21,26 +22,35 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
+    public ResponseEntity<UserResponse> createUser(@RequestBody User user) {
 
         User createdUser = userService.createUser(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(UserResponse.from(createdUser));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
         User user = userService.getUserById(id);
-        return ResponseEntity.ok(user); //todo change later
+        return ResponseEntity.ok(UserResponse.from(user));
     }
 
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    public ResponseEntity<List<UserResponse>> getAllUsers() {
+        return ResponseEntity.ok(
+                userService.getAllUsers()
+                        .stream()
+                        .map(UserResponse::from)
+                        .toList()
+        );
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
-        return ResponseEntity.ok(userService.updateUser(id, user));
+    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id,
+                                                   @RequestBody User user) {
+        User updated = userService.updateUser(id, user);
+        return ResponseEntity.ok(UserResponse.from(updated));
     }
 
     @DeleteMapping("/{id}")
@@ -50,8 +60,13 @@ public class UserController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<User>> searchUsers(@RequestParam String name) {
-        return ResponseEntity.ok(userService.searchUsersByName(name));
+    public ResponseEntity<List<UserResponse>> searchUsers(@RequestParam String name) {
+        return ResponseEntity.ok(
+                userService.searchUsersByName(name)
+                        .stream()
+                        .map(UserResponse::from)
+                        .toList()
+        );
     }
 
     @PatchMapping("/{id}/password")
