@@ -1,0 +1,8 @@
+package br.com.gastrohub.exception;
+
+public class OperacaoNaoPermitidaException extends RuntimeException {
+
+    public OperacaoNaoPermitidaException(String mensagem) {
+        super(mensagem);
+    }
+}

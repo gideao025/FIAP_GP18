@@ -4,9 +4,11 @@ import br.com.gastrohub.dto.request.*;
 import br.com.gastrohub.dto.response.LoginResponse;
 import br.com.gastrohub.dto.response.UsuarioResponse;
 import br.com.gastrohub.entity.Usuario;
+import br.com.gastrohub.enums.TipoUsuarioEnum;
 import br.com.gastrohub.exception.AcessoNegadoException;
 import br.com.gastrohub.exception.DadosJaCadastradosException;
 import br.com.gastrohub.exception.LoginOuSenhaInvalidosException;
+import br.com.gastrohub.exception.OperacaoNaoPermitidaException;
 import br.com.gastrohub.exception.SenhaAtualInvalidaException;
 import br.com.gastrohub.exception.UsuarioNaoEncontradoException;
 import br.com.gastrohub.repository.UsuarioRepository;
@@ -37,6 +39,9 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Transactional
     public UsuarioResponse criarUsuario(CriarUsuarioRequest request) {
         log.info("Criando usuário com login '{}' e tipo '{}'", request.login(), request.tipo());
+        if (request.tipo() == TipoUsuarioEnum.ADMIN) {
+            throw new OperacaoNaoPermitidaException("Não é permitido criar usuários do tipo ADMIN");
+        }
         validarLoginUnico(request.login());
         validarEmailUnico(request.email());
 

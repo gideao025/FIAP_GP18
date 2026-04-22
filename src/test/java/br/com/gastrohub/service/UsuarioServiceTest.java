@@ -8,6 +8,7 @@ import br.com.gastrohub.enums.TipoUsuarioEnum;
 import br.com.gastrohub.exception.AcessoNegadoException;
 import br.com.gastrohub.exception.DadosJaCadastradosException;
 import br.com.gastrohub.exception.LoginOuSenhaInvalidosException;
+import br.com.gastrohub.exception.OperacaoNaoPermitidaException;
 import br.com.gastrohub.exception.SenhaAtualInvalidaException;
 import br.com.gastrohub.exception.UsuarioNaoEncontradoException;
 import br.com.gastrohub.repository.UsuarioRepository;
@@ -130,6 +131,20 @@ class UsuarioServiceTest {
             assertThatThrownBy(() -> usuarioService.criarUsuario(request))
                     .isInstanceOf(DadosJaCadastradosException.class)
                     .hasMessageContaining("roberto.rodriguez@email.com");
+        }
+
+        @Test
+        @DisplayName("Deve lançar exceção ao tentar criar usuário do tipo ADMIN via API")
+        void deveLancarExcecaoAoCriarUsuarioAdmin() {
+            CriarUsuarioRequest request = new CriarUsuarioRequest(
+                    "Admin", "admin@gastrohub.com", "admin", "senha123", TipoUsuarioEnum.ADMIN
+            );
+
+            assertThatThrownBy(() -> usuarioService.criarUsuario(request))
+                    .isInstanceOf(OperacaoNaoPermitidaException.class)
+                    .hasMessageContaining("ADMIN");
+
+            verify(usuarioRepository, never()).save(any());
         }
     }
 

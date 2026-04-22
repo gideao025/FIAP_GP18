@@ -25,9 +25,10 @@ Backend de gerenciamento de usuários desenvolvido como entrega da **Fase 1** do
 
 Sistema de gestão para restaurantes — a **Fase 1** foca exclusivamente no backend de gerenciamento de usuários.
 
-O sistema suporta dois tipos de usuário:
+O sistema suporta três tipos de usuário:
 - **DONO_RESTAURANTE** — proprietário de um estabelecimento
 - **CLIENTE** — consumidor final
+- **ADMIN** — acesso total ao sistema; não pode ser criado via API, é provisionado diretamente no banco na inicialização do container
 
 As funcionalidades entregues nesta fase são:
 - Cadastro de usuário
@@ -107,7 +108,7 @@ Banco de dados (PostgreSQL)
 | email | VARCHAR (UNIQUE) | E-mail do usuário |
 | login | VARCHAR (UNIQUE) | Login de acesso |
 | senha | VARCHAR | Senha em hash Argon2id |
-| tipo | VARCHAR | `DONO_RESTAURANTE` ou `CLIENTE` |
+| tipo | VARCHAR | `DONO_RESTAURANTE`, `CLIENTE` ou `ADMIN` |
 | data_criacao | TIMESTAMP | Data de cadastro |
 | data_ultima_alteracao | TIMESTAMP | Data da última modificação |
 
@@ -292,6 +293,8 @@ Para erros de validação (`400`), há um campo adicional com os erros por campo
 - Campos `null` não são incluídos nas respostas JSON
 - Endpoints protegidos exigem **token JWT Bearer** — obtido no login (expira em 30 minutos)
 - Sem token → `401 Unauthorized`
+- **Não é permitido criar usuários do tipo `ADMIN` via API** — tentativa retorna `400 Bad Request`
+- O usuário `ADMIN` é provisionado automaticamente na inicialização do banco (login: `admin`, senha: `admin123`) e tem acesso irrestrito a todos os endpoints
 
 ---
 
@@ -384,7 +387,7 @@ A aplicação suporta as seguintes variáveis de ambiente para customização (c
 
 ## Testes
 
-O projeto possui **32 testes automatizados** divididos em:
+O projeto possui **49 testes automatizados** divididos em:
 
 | Tipo | Classe | Descrição |
 |---|---|---|
@@ -400,7 +403,7 @@ mvn test
 
 Resultado esperado:
 ```
-Tests run: 32, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 49, Failures: 0, Errors: 0, Skipped: 0
 BUILD SUCCESS
 ```
 

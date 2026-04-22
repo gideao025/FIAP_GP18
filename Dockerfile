@@ -8,12 +8,10 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Cria usuário não-root para rodar a aplicação (boa prática de segurança)
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 COPY --from=build /app/target/*.jar app.jar
 
-# Garante que o usuário da aplicação seja dono do arquivo
 RUN chown appuser:appgroup app.jar
 
 USER appuser

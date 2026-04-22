@@ -63,6 +63,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(problemDetail);
     }
 
+    @ExceptionHandler(OperacaoNaoPermitidaException.class)
+    public ResponseEntity<ProblemDetail> tratarOperacaoNaoPermitida(OperacaoNaoPermitidaException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage()
+        );
+        problemDetail.setType(URI.create("https://api.gastrohub.com/errors/operacao-nao-permitida"));
+        problemDetail.setTitle("Operação não permitida");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
+    }
+
     @ExceptionHandler(DadosJaCadastradosException.class)
     public ResponseEntity<ProblemDetail> tratarDadosJaCadastrados(DadosJaCadastradosException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
