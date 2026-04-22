@@ -1,0 +1,402 @@
+{
+  "info": {
+    "name": "GastroHub - Fase 1 | Usuários",
+    "description": "Collection para testar a API de gerenciamento de usuários do GastroHub Fase 1 - FIAP PosTech.\n\nVariáveis:\n- baseUrl: http://localhost:8080\n- version: v1\n- token: preenchido automaticamente após o login\n\nFluxo sugerido:\n1. Criar um usuário (POST /usuarios)\n2. Validar login (POST /usuarios/login) → salva o token automaticamente\n3. Usar os demais endpoints (precisam do token Bearer)\n\nDois tipos de usuário: DONO_RESTAURANTE e CLIENTE.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "version",
+      "value": "v1",
+      "type": "string"
+    },
+    {
+      "key": "usuarioId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Usuários",
+      "item": [
+        {
+          "name": "Criar usuário (Cliente)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Roberto Rodriguez\",\n  \"email\": \"roberto.rodriguez@email.com\",\n  \"login\": \"rrodriguez\",\n  \"senha\": \"password123\",\n  \"tipo\": \"CLIENTE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{version}}/usuarios",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{version}}", "usuarios"]
+            },
+            "description": "Cria um novo usuário do tipo CLIENTE. Endpoint público — não requer token.\nRetorna 201 em caso de sucesso.\nRetorna 400 se dados inválidos.\nRetorna 409 se login ou email já existem."
+          },
+          "response": []
+        },
+        {
+          "name": "Criar usuário (Dono de Restaurante)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Maria Restaurante\",\n  \"email\": \"maria.restaurante@email.com\",\n  \"login\": \"mariadono\",\n  \"senha\": \"senha456\",\n  \"tipo\": \"DONO_RESTAURANTE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{version}}/usuarios",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{version}}", "usuarios"]
+            },
+            "description": "Cria um novo usuário do tipo DONO_RESTAURANTE. Endpoint público — não requer token."
+          },
+          "response": []
+        },
+        {
+          "name": "Criar usuário - Dados inválidos (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"\",\n  \"email\": \"email-invalido\",\n  \"login\": \"ab\",\n  \"senha\": \"123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{version}}/usuarios",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{version}}", "usuarios"]
+            },
+            "description": "Testa validações: nome vazio, email inválido, login curto demais e senha curta demais.\nEspera retorno 400 com lista de erros por campo."
+          },
+          "response": []
+        },
+        {
+          "name": "Validar login (obtém token JWT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "    console.log('Token JWT salvo com sucesso. Expira em:', json.expiracao);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"rrodriguez\",\n  \"senha\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{version}}/usuarios/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{version}}", "usuarios", "login"]
+            },
+            "description": "Valida as credenciais do usuário e retorna um token JWT Bearer.\nEndpoint público — não requer token.\nO token é salvo automaticamente na variável {{token}} da collection.\nRetorna 200 com token, tipo e data de expiração (30 min).\nRetorna 401 se login ou senha incorretos."
+          },
+          "response": []
+        },
+        {
+          "name": "Erro: Login inválido (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"usuarioqnaoexiste\",\n  \"senha\": \"senhaqualquer\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{version}}/usuarios/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{version}}", "usuarios", "login"]
+            },
+            "description": "Tenta fazer login com credenciais inválidas.\nEspera retorno 401 com erro em formato RFC 7807."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar todos os usuários",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{version}}/usuarios",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{version}}", "usuarios"]
+            },
+            "description": "Retorna lista completa de usuários cadastrados.\nRequer token Bearer (faça login primeiro).\nRetorna 200 com array de usuários."
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar usuário por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{version}}/usuarios/{{usuarioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{version}}", "usuarios", "{{usuarioId}}"]
+            },
+            "description": "Busca um usuário específico pelo ID.\nRequer token Bearer (faça login primeiro).\nRetorna 200 com dados do usuário.\nRetorna 404 se usuário não encontrado."
+          },
+          "response": []
+        },
+        {
+          "name": "Erro: Usuário não encontrado (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{version}}/usuarios/999",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{version}}", "usuarios", "999"]
+            },
+            "description": "Tenta buscar um usuário que não existe.\nRequer token Bearer.\nEspera retorno 404 com erro em formato RFC 7807."
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar usuários por nome",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{version}}/usuarios/buscar?nome=Roberto",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{version}}", "usuarios", "buscar"],
+              "query": [
+                {
+                  "key": "nome",
+                  "value": "Roberto"
+                }
+              ]
+            },
+            "description": "Busca usuários por nome (case-insensitive e sem acento).\nRequer token Bearer (faça login primeiro).\nRetorna 200 com array de usuários encontrados (pode estar vazio)."
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar dados do usuário",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Roberto Santos Rodriguez\",\n  \"email\": \"roberto.santos@email.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{version}}/usuarios/{{usuarioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{version}}", "usuarios", "{{usuarioId}}"]
+            },
+            "description": "Atualiza dados de um usuário (nome, email).\nLogin e tipo NÃO podem ser alterados.\nRequer token Bearer (faça login primeiro).\nRetorna 200 com dados atualizados.\nRetorna 404 se usuário não encontrado.\nRetorna 409 se email já está em uso."
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar dados - Email duplicado (409)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"maria.restaurante@email.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{version}}/usuarios/{{usuarioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{version}}", "usuarios", "{{usuarioId}}"]
+            },
+            "description": "Tenta atualizar com email que já pertence a outro usuário.\nRequer token Bearer.\nEspera retorno 409 com erro em formato RFC 7807."
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar dados - Usuário não encontrado (404)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Usuário Inexistente\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{version}}/usuarios/999",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{version}}", "usuarios", "999"]
+            },
+            "description": "Tenta atualizar um usuário que não existe.\nRequer token Bearer.\nEspera retorno 404 com erro em formato RFC 7807."
+          },
+          "response": []
+        },
+        {
+          "name": "Trocar senha",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senhaAtual\": \"password123\",\n  \"novaSenha\": \"novaSenha456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{version}}/usuarios/{{usuarioId}}/senha",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{version}}", "usuarios", "{{usuarioId}}", "senha"]
+            },
+            "description": "Troca a senha do usuário.\nRequer confirmação da senha atual correta.\nRequer token Bearer (faça login primeiro).\nRetorna 204 em caso de sucesso.\nRetorna 401 se senha atual incorreta.\nRetorna 404 se usuário não encontrado."
+          },
+          "response": []
+        },
+        {
+          "name": "Trocar senha - Senha atual incorreta (401)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senhaAtual\": \"senhaErrada\",\n  \"novaSenha\": \"novaSenha456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{version}}/usuarios/{{usuarioId}}/senha",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{version}}", "usuarios", "{{usuarioId}}", "senha"]
+            },
+            "description": "Tenta trocar senha com senha atual incorreta.\nRequer token Bearer.\nEspera retorno 401 com erro em formato RFC 7807."
+          },
+          "response": []
+        },
+        {
+          "name": "Excluir usuário",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{version}}/usuarios/{{usuarioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{version}}", "usuarios", "{{usuarioId}}"]
+            },
+            "description": "Exclui um usuário do sistema.\nRequer token Bearer (faça login primeiro).\nRetorna 204 em caso de sucesso (sem conteúdo).\nRetorna 404 se usuário não encontrado."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
