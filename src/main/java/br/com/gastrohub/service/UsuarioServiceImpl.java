@@ -149,12 +149,6 @@ public class UsuarioServiceImpl implements UsuarioService {
                 .collect(Collectors.toList());
     }
 
-    // ── Validações de acesso ──────────────────────────────────────────────────
-
-    /**
-     * ADMIN acessa qualquer recurso.
-     * DONO_RESTAURANTE e CLIENTE só acessam o próprio.
-     */
     private void validarAcessoEscrita(Usuario dono) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean ehAdmin = auth.getAuthorities().stream()
@@ -165,8 +159,6 @@ public class UsuarioServiceImpl implements UsuarioService {
             throw new AcessoNegadoException();
         }
     }
-
-    // ── Helpers ──────────────────────────────────────────────────────────────
 
     private Usuario buscarUsuarioOuLancarExcecao(Long id) {
         return usuarioRepository.findById(id)

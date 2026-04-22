@@ -5,8 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
-// ATENÇÃO: campo senha NÃO está incluído propositalmente
-@Schema(description = "Dados do usuário retornados pela API — campo senha nunca é incluído")
+@Schema(description = "Dados do usuário retornados pela API")
 public record UsuarioResponse(
 
         @Schema(description = "ID único do usuário", example = "1")

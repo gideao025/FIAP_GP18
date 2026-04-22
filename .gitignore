@@ -1,7 +1,7 @@
 # Compilado Maven
 target/
 
-# Arquivos Maven wrapper (caso não queira versionar)
+# Maven wrapper
 !.mvn/wrapper/maven-wrapper.jar
 !.mvn/wrapper/maven-wrapper.properties
 
@@ -28,9 +28,9 @@ Thumbs.db
 *.log
 logs/
 
-# Variáveis de ambiente (nunca subir)
+# Variáveis de ambiente
 .env
 .env.*
 
-# Arquivos de configuração local (sobrescritas locais)
+# Configuração local
 src/main/resources/application-local.properties
