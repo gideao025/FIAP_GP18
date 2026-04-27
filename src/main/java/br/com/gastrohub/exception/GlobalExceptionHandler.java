@@ -1,7 +1,6 @@
 package br.com.gastrohub.exception;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -14,10 +13,11 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final String BASE_ERROR_URI = "https://api.gastrohub.com/errors/";
 
     @ExceptionHandler(AcessoNegadoException.class)
     public ResponseEntity<ProblemDetail> tratarAcessoNegado(AcessoNegadoException ex) {
@@ -25,7 +25,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.FORBIDDEN,
                 ex.getMessage()
         );
-        problemDetail.setType(URI.create("https://api.gastrohub.com/errors/acesso-negado"));
+        problemDetail.setType(URI.create(BASE_ERROR_URI + "acesso-negado"));
         problemDetail.setTitle("Acesso negado");
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problemDetail);
     }
@@ -36,7 +36,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.NOT_FOUND,
                 ex.getMessage()
         );
-        problemDetail.setType(URI.create("https://api.gastrohub.com/errors/usuario-nao-encontrado"));
+        problemDetail.setType(URI.create(BASE_ERROR_URI + "usuario-nao-encontrado"));
         problemDetail.setTitle("Usuário não encontrado");
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail);
     }
@@ -47,7 +47,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.UNAUTHORIZED,
                 ex.getMessage()
         );
-        problemDetail.setType(URI.create("https://api.gastrohub.com/errors/credenciais-invalidas"));
+        problemDetail.setType(URI.create(BASE_ERROR_URI + "credenciais-invalidas"));
         problemDetail.setTitle("Credenciais inválidas");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail);
     }
@@ -58,7 +58,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.UNPROCESSABLE_ENTITY,
                 ex.getMessage()
         );
-        problemDetail.setType(URI.create("https://api.gastrohub.com/errors/senha-atual-invalida"));
+        problemDetail.setType(URI.create(BASE_ERROR_URI + "senha-atual-invalida"));
         problemDetail.setTitle("Senha atual incorreta");
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(problemDetail);
     }
@@ -69,7 +69,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST,
                 ex.getMessage()
         );
-        problemDetail.setType(URI.create("https://api.gastrohub.com/errors/operacao-nao-permitida"));
+        problemDetail.setType(URI.create(BASE_ERROR_URI + "operacao-nao-permitida"));
         problemDetail.setTitle("Operação não permitida");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
     }
@@ -80,7 +80,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.CONFLICT,
                 ex.getMessage()
         );
-        problemDetail.setType(URI.create("https://api.gastrohub.com/errors/dados-duplicados"));
+        problemDetail.setType(URI.create(BASE_ERROR_URI + "dados-duplicados"));
         problemDetail.setTitle("Dados já cadastrados");
         return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
     }
@@ -98,7 +98,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST,
                 "Erro de validação nos campos"
         );
-        problemDetail.setType(URI.create("https://api.gastrohub.com/errors/validacao"));
+        problemDetail.setType(URI.create(BASE_ERROR_URI + "validacao"));
         problemDetail.setTitle("Erro de validação");
         problemDetail.setProperty("erros", errosPorCampo);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
@@ -111,7 +111,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Erro interno do servidor"
         );
-        problemDetail.setType(URI.create("https://api.gastrohub.com/errors/erro-interno"));
+        problemDetail.setType(URI.create(BASE_ERROR_URI + "erro-interno"));
         problemDetail.setTitle("Erro interno do servidor");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problemDetail);
     }

@@ -26,25 +26,22 @@ public interface UsuarioApi {
         })
         ResponseEntity<UsuarioResponse> criarUsuario(@Valid @RequestBody CriarUsuarioRequest request);
 
-        @Operation(summary = "Buscar usuário por ID", description = "ADMIN e DONO_RESTAURANTE acessam qualquer ID. CLIENTE só acessa o próprio.")
+        @Operation(summary = "Buscar usuário por ID", description = "Qualquer usuário autenticado pode buscar por qualquer ID.")
         @ApiResponses({
                         @ApiResponse(responseCode = "200", description = "Usuário encontrado"),
-                        @ApiResponse(responseCode = "403", description = "Sem permissão para acessar este usuário"),
                         @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
         })
         ResponseEntity<UsuarioResponse> buscarUsuarioPorId(@PathVariable Long id);
 
-        @Operation(summary = "Listar todos os usuários", description = "Restrito a ADMIN e DONO_RESTAURANTE.")
+        @Operation(summary = "Listar todos os usuários", description = "Qualquer usuário autenticado pode listar.")
         @ApiResponses({
-                        @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso"),
-                        @ApiResponse(responseCode = "403", description = "Sem permissão para listar usuários")
+                        @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
         })
         ResponseEntity<List<UsuarioResponse>> listarTodosUsuarios();
 
-        @Operation(summary = "Buscar usuários por nome", description = "Restrito a ADMIN e DONO_RESTAURANTE. Busca parcial sem distinção de acento ou maiúsculas.")
+        @Operation(summary = "Buscar usuários por nome", description = "Qualquer usuário autenticado. Busca parcial sem distinção de acento ou maiúsculas.")
         @ApiResponses({
-                        @ApiResponse(responseCode = "200", description = "Lista de usuários encontrados"),
-                        @ApiResponse(responseCode = "403", description = "Sem permissão para buscar usuários")
+                        @ApiResponse(responseCode = "200", description = "Lista de usuários encontrados")
         })
         ResponseEntity<List<UsuarioResponse>> buscarPorNome(@RequestParam(name = "nome") String nome);
 
@@ -60,15 +57,15 @@ public interface UsuarioApi {
                         @PathVariable Long id,
                         @Valid @RequestBody AtualizarUsuarioRequest request);
 
-        @Operation(summary = "Excluir usuário", description = "Restrito a ADMIN.")
+        @Operation(summary = "Excluir usuário", description = "ADMIN pode excluir qualquer usuário. Usuário comum pode excluir apenas a própria conta.")
         @ApiResponses({
                         @ApiResponse(responseCode = "204", description = "Usuário excluído com sucesso"),
-                        @ApiResponse(responseCode = "403", description = "Sem permissão para excluir usuários"),
+                        @ApiResponse(responseCode = "403", description = "Sem permissão para excluir este usuário"),
                         @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
         })
         ResponseEntity<Void> excluirUsuario(@PathVariable Long id);
 
-        @Operation(summary = "Trocar senha", description = "Apenas o próprio usuário pode trocar sua senha — nem o ADMIN.")
+        @Operation(summary = "Trocar senha", description = "O próprio usuário pode trocar sua senha (exige senha atual). ADMIN pode trocar a senha de qualquer usuário sem informar a senha atual.")
         @ApiResponses({
                         @ApiResponse(responseCode = "204", description = "Senha alterada com sucesso"),
                         @ApiResponse(responseCode = "400", description = "Dados inválidos"),

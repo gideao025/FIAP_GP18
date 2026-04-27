@@ -14,9 +14,7 @@ import br.com.gastrohub.exception.UsuarioNaoEncontradoException;
 import br.com.gastrohub.repository.UsuarioRepository;
 import br.com.gastrohub.security.JwtService;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.core.Authentication;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,11 +23,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UsuarioServiceImpl implements UsuarioService {
 
-    private static final Logger log = LoggerFactory.getLogger(UsuarioServiceImpl.class);
+    private static final String ROLE_ADMIN = "ROLE_" + TipoUsuarioEnum.ADMIN.name();
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder codificadorDeSenha;
@@ -61,7 +60,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     @Transactional(readOnly = true)
     public UsuarioResponse buscarUsuarioPorId(Long id) {
-        Usuario usuario = buscarUsuarioOuLancarExcecao(id);
+        Usuario usuario = buscarUsuario(id);
         return converterParaResponse(usuario);
     }
 
@@ -77,30 +76,19 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Transactional
     public UsuarioResponse atualizarDadosDoUsuario(Long id, AtualizarUsuarioRequest request) {
         log.info("Atualizando dados do usuário ID {}", id);
-        Usuario usuario = buscarUsuarioOuLancarExcecao(id);
-        validarAcessoEscrita(usuario);
-
-        if (request.nome() != null) {
-            log.debug("Atualizando nome do usuário ID {}", id);
-            usuario.setNome(request.nome());
-        }
-
-        if (request.email() != null && !request.email().equals(usuario.getEmail())) {
-            log.debug("Atualizando email do usuário ID {}", id);
-            validarEmailUnico(request.email());
-            usuario.setEmail(request.email());
-        }
-
-        Usuario usuarioAtualizado = usuarioRepository.save(usuario);
+        Usuario usuario = buscarUsuario(id);
+        validarAcessoAlteracoes(usuario);
+        aplicarAlteracoes(usuario, request);
+        UsuarioResponse response = converterParaResponse(usuarioRepository.save(usuario));
         log.info("Usuário ID {} atualizado com sucesso", id);
-        return converterParaResponse(usuarioAtualizado);
+        return response;
     }
 
     @Override
     @Transactional
     public void excluirUsuario(Long id) {
-        Usuario usuario = buscarUsuarioOuLancarExcecao(id);
-        validarAcessoEscrita(usuario);
+        Usuario usuario = buscarUsuario(id);
+        validarAcessoAlteracoes(usuario);
         usuarioRepository.deleteById(id);
     }
 
@@ -108,23 +96,16 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Transactional
     public void trocarSenhaDoUsuario(Long id, TrocarSenhaRequest request) {
         log.info("Processando troca de senha para usuário ID {}", id);
-        Usuario usuario = buscarUsuarioOuLancarExcecao(id);
+        Usuario usuario = buscarUsuario(id);
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        boolean ehAdmin = auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        boolean ehProprietario = usuario.getLogin().equals(auth.getName());
+        validarAcessoAlteracoes(usuario);
 
-        if (!ehAdmin && !ehProprietario) {
-            log.warn("Acesso negado: usuário '{}' tentou trocar a senha de '{}'", auth.getName(), usuario.getLogin());
-            throw new AcessoNegadoException();
-        }
+        String usuarioLogado = SecurityContextHolder.getContext().getAuthentication().getName();
+        boolean proprietarioDoLogin = usuario.getLogin().equals(usuarioLogado);
 
-        if (ehProprietario) {
-            if (!codificadorDeSenha.matches(request.senhaAtual(), usuario.getSenha())) {
-                log.warn("Tentativa de troca de senha com senha atual incorreta para usuário ID {}", id);
-                throw new SenhaAtualInvalidaException();
-            }
+        if (proprietarioDoLogin && !codificadorDeSenha.matches(request.senhaAtual(), usuario.getSenha())) {
+            log.warn("Tentativa de troca de senha com senha atual incorreta para usuário ID {}", id);
+            throw new SenhaAtualInvalidaException();
         }
 
         usuario.setSenha(codificadorDeSenha.encode(request.novaSenha()));
@@ -154,18 +135,17 @@ public class UsuarioServiceImpl implements UsuarioService {
                 .collect(Collectors.toList());
     }
 
-    private void validarAcessoEscrita(Usuario dono) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        boolean ehAdmin = auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        if (ehAdmin) return;
-        if (!dono.getLogin().equals(auth.getName())) {
-            log.warn("Acesso negado: usuário '{}' tentou modificar dados de '{}'", auth.getName(), dono.getLogin());
-            throw new AcessoNegadoException();
+    private void aplicarAlteracoes(Usuario usuario, AtualizarUsuarioRequest request) {
+        if (request.nome() != null) {
+            usuario.setNome(request.nome());
+        }
+        if (request.email() != null && !request.email().equals(usuario.getEmail())) {
+            validarEmailUnico(request.email());
+            usuario.setEmail(request.email());
         }
     }
 
-    private Usuario buscarUsuarioOuLancarExcecao(Long id) {
+    private Usuario buscarUsuario(Long id) {
         return usuarioRepository.findById(id)
                 .orElseThrow(() -> new UsuarioNaoEncontradoException(id));
     }
@@ -184,6 +164,21 @@ public class UsuarioServiceImpl implements UsuarioService {
         }
     }
 
+    private boolean admin() {
+        return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(ROLE_ADMIN));
+    }
+
+    private void validarAcessoAlteracoes(Usuario usuario) {
+        if (admin())
+            return;
+        String usuarioLogado = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (!usuario.getLogin().equals(usuarioLogado)) {
+            log.warn("Acesso negado: usuário '{}' tentou modificar dados de '{}'", usuarioLogado, usuario.getLogin());
+            throw new AcessoNegadoException();
+        }
+    }
+
     private UsuarioResponse converterParaResponse(Usuario usuario) {
         return new UsuarioResponse(
                 usuario.getId(),
@@ -192,7 +187,6 @@ public class UsuarioServiceImpl implements UsuarioService {
                 usuario.getLogin(),
                 usuario.getTipo(),
                 usuario.getDataUltimaAlteracao(),
-                usuario.getDataCriacao()
-        );
+                usuario.getDataCriacao());
     }
 }

@@ -1,10 +1,12 @@
 package br.com.gastrohub.security;
 
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,6 +17,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -34,21 +37,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = authHeader.substring(7);
-        String login = jwtService.extrairLogin(token);
-
-        if (login != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(login);
-
-            if (jwtService.tokenValido(token, userDetails)) {
-                UsernamePasswordAuthenticationToken autenticacao = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities()
-                );
-                autenticacao.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(autenticacao);
-            }
+        try {
+            autenticarRequisicao(authHeader.substring(7), request);
+        } catch (JwtException e) {
+            log.warn("Token JWT inválido: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void autenticarRequisicao(String token, HttpServletRequest request) {
+        String login = jwtService.extrairLogin(token);
+
+        if (login == null || SecurityContextHolder.getContext().getAuthentication() != null) {
+            return;
+        }
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(login);
+
+        if (!jwtService.tokenValido(token, userDetails)) {
+            return;
+        }
+
+        UsernamePasswordAuthenticationToken autenticacao = new UsernamePasswordAuthenticationToken(
+                userDetails, null, userDetails.getAuthorities()
+        );
+        autenticacao.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        SecurityContextHolder.getContext().setAuthentication(autenticacao);
     }
 }
