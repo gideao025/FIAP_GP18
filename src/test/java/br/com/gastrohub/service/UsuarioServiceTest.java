@@ -153,8 +153,8 @@ class UsuarioServiceTest {
     class BuscarUsuario {
 
         @Test
-        @DisplayName("Deve retornar usuário quando ADMIN busca qualquer ID")
-        void deveRetornarUsuarioQuandoAdminBusca() {
+        @DisplayName("Deve retornar usuário por ID quando encontrado")
+        void deveRetornarUsuarioPorId() {
             when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioBase));
 
             UsuarioResponse response = usuarioService.buscarUsuarioPorId(1L);
@@ -162,27 +162,6 @@ class UsuarioServiceTest {
             assertThat(response).isNotNull();
             assertThat(response.id()).isEqualTo(1L);
             assertThat(response.nome()).isEqualTo("Roberto Rodriguez");
-        }
-
-        @Test
-        @DisplayName("Deve retornar usuário quando CLIENTE busca o próprio ID")
-        void deveRetornarUsuarioQuandoClienteBuscaOProprio() {
-            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioBase));
-
-            UsuarioResponse response = usuarioService.buscarUsuarioPorId(1L);
-
-            assertThat(response).isNotNull();
-            assertThat(response.login()).isEqualTo("rrodriguez");
-        }
-
-        @Test
-        @DisplayName("Deve retornar usuário quando CLIENTE acessa dados de outro usuário")
-        void deveRetornarUsuarioQuandoClienteAcessaDadosDeOutro() {
-            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioBase));
-
-            UsuarioResponse response = usuarioService.buscarUsuarioPorId(1L);
-
-            assertThat(response).isNotNull();
             assertThat(response.login()).isEqualTo("rrodriguez");
         }
 

@@ -1,42 +1,18 @@
 # GastroHub — FIAP PosTech
 
-Backend de gerenciamento de usuários desenvolvido como entrega da **Fase 1** do curso de **Arquitetura e Desenvolvimento Java** da FIAP PosTech.
+Backend de gerenciamento de usuários — entrega da **Fase 1** do curso de **Arquitetura e Desenvolvimento Java** da FIAP PosTech.
+
+![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.3-6DB33F?logo=springboot&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
+![Testes](https://img.shields.io/badge/Testes-40%20passing-brightgreen?logo=junit5&logoColor=white)
 
 ---
 
-## Sumário
+## Status do Projeto
 
-- [Sobre o Projeto](#sobre-o-projeto)
-- [Tecnologias](#tecnologias)
-- [Arquitetura](#arquitetura)
-- [Entidades](#entidades)
-- [Endpoints da API](#endpoints-da-api)
-- [Regras de Negócio](#regras-de-negócio)
-- [Pré-requisitos](#pré-requisitos)
-- [Como Executar](#como-executar)
-- [Variáveis de Ambiente](#variáveis-de-ambiente)
-- [Testes](#testes)
-- [Documentação Interativa (Swagger)](#documentação-interativa-swagger)
-- [Collection Postman](#collection-postman)
-
----
-
-## Sobre o Projeto
-
-Sistema de gestão para restaurantes — a **Fase 1** foca exclusivamente no backend de gerenciamento de usuários.
-
-O sistema suporta três tipos de usuário:
-- **DONO_RESTAURANTE** — proprietário de um estabelecimento
-- **CLIENTE** — consumidor final
-- **ADMIN** — acesso total ao sistema; não pode ser criado via API, é provisionado diretamente no banco na inicialização do container
-
-As funcionalidades entregues nesta fase são:
-- Cadastro de usuário
-- Listagem e busca de usuários
-- Atualização de dados cadastrais
-- Troca de senha com confirmação da senha atual
-- Validação de login (autenticação simples)
-- Exclusão de usuário
+✅ **Fase 1 concluída** — backend de gerenciamento de usuários entregue com autenticação JWT, testes automatizados e documentação Swagger.
 
 ---
 
@@ -46,458 +22,83 @@ As funcionalidades entregues nesta fase são:
 |---|---|
 | Linguagem | Java 21 |
 | Framework | Spring Boot 3.2.3 |
-| Banco de dados (produção) | PostgreSQL 16 |
-| Banco de dados (testes) | H2 in-memory |
-| ORM | Spring Data JPA / Hibernate |
-| Validação | Bean Validation (Jakarta) |
-| Hash de senha | Argon2id (Spring Security) |
+| Banco de dados | PostgreSQL 16 |
 | Autenticação | Spring Security + JWT (JJWT 0.12.6) |
-| Documentação | SpringDoc OpenAPI 2.3.0 (Swagger UI) |
-| Build | Maven 3.9+ |
+| Hash de senha | Argon2id |
+| Documentação | Swagger UI (SpringDoc OpenAPI 2.3.0) |
 | Container | Docker + Docker Compose |
 | Testes | JUnit 5 + Mockito + Spring Security Test |
-| Utilitários | Lombok |
-
----
-
-## Arquitetura
-
-O projeto segue a arquitetura em camadas do Spring Boot, respeitando os princípios SOLID:
-
-```
-br.com.gastrohub
-├── controller/       # Camada HTTP — recebe requisições e retorna respostas
-├── service/          # Regras de negócio (interface + implementação)
-├── repository/       # Acesso ao banco de dados (Spring Data JPA)
-├── entity/           # Entidades JPA mapeadas para o banco
-├── enums/            # Enumerações do domínio
-├── dto/              # Objetos de transferência de dados (Request / Response)
-├── exception/        # Exceções customizadas e handler global de erros
-├── security/         # JWT: JwtService, JwtAuthenticationFilter, UsuarioDetailsService
-└── config/           # Configurações: OpenApiConfig, SegurancaConfig
-```
-
-### Fluxo de uma requisição
-
-```
-Cliente HTTP
-    │
-    ▼
-Controller  →  valida entrada (@Valid)
-    │
-    ▼
-Service     →  aplica regras de negócio
-    │
-    ▼
-Repository  →  persiste / consulta no banco
-    │
-    ▼
-Banco de dados (PostgreSQL)
-```
-
----
-
-## Entidades
-
-### usuarios
-
-| Coluna | Tipo | Descrição |
-|---|---|---|
-| id | BIGINT (PK) | Identificador único |
-| nome | VARCHAR | Nome completo |
-| email | VARCHAR (UNIQUE) | E-mail do usuário |
-| login | VARCHAR (UNIQUE) | Login de acesso |
-| senha | VARCHAR | Senha em hash Argon2id |
-| tipo | VARCHAR | `DONO_RESTAURANTE`, `CLIENTE` ou `ADMIN` |
-| data_criacao | TIMESTAMP | Data de cadastro |
-| data_ultima_alteracao | TIMESTAMP | Data da última modificação |
-
----
-
-## Endpoints da API
-
-Base URL: `http://localhost:8080`
-
-> **Nota:** Todos os endpoints estão versionados sob `/v1/` para suportar evoluções futuras da API de forma retrocompatível.
-
-### Usuários
-
-#### Criar usuário
-```
-POST /usuarios
-```
-**Body:**
-```json
-{
-  "nome": "Roberto Rodrigues",
-  "email": "rrodriguez@email.com",
-  "login": "rrodriguez",
-  "senha": "password123",
-  "tipo": "CLIENTE"
-}
-```
-**Respostas:**
-- `201 Created` — usuário criado com sucesso
-- `400 Bad Request` — dados inválidos ou faltando
-- `409 Conflict` — login ou e-mail já cadastrado
-
----
-
-#### Buscar usuário por ID
-```
-GET /v1/usuarios/{id}
-```
-**Respostas:**
-- `200 OK` — retorna os dados do usuário
-- `404 Not Found` — usuário não encontrado
-
----
-
-#### Listar todos os usuários
-```
-GET /v1/usuarios
-```
-**Respostas:**
-- `200 OK` — retorna lista de usuários
-
----
-
-#### Buscar usuários por nome
-```
-GET /v1/usuarios/buscar?nome=Roberto
-```
-Retorna usuários cujo nome contenha o texto informado (busca case-insensitive).
-
-**Query Parameters:**
-- `nome` (obrigatório) — texto para buscar no nome do usuário
-
-**Respostas:**
-- `200 OK` — retorna lista de usuários encontrados (pode estar vazia)
-
-**Exemplo:**
-```bash
-curl "http://localhost:8080/v1/usuarios/buscar?nome=Silva"
-```
-
----
-
-#### Atualizar dados do usuário
-```
-PUT /v1/usuarios/{id}
-```
-Apenas os campos informados serão atualizados. Login e tipo não podem ser alterados.
-
-**Body (todos os campos são opcionais):**
-```json
-{
-  "nome": "Roberto Rodrigues",
-  "email": "rrodriguez.santos@email.com"
-}
-```
-**Respostas:**
-- `200 OK` — dados atualizados
-- `400 Bad Request` — dados inválidos
-- `404 Not Found` — usuário não encontrado
-- `409 Conflict` — e-mail já em uso
-
----
-
-#### Excluir usuário
-```
-DELETE /v1/usuarios/{id}
-```
-**Respostas:**
-- `204 No Content` — usuário excluído
-- `404 Not Found` — usuário não encontrado
-
----
-
-#### Trocar senha
-```
-PATCH /v1/usuarios/{id}/senha
-```
-**Body:**
-```json
-{
-  "senhaAtual": "senha123",
-  "novaSenha": "novaSenha456"
-}
-```
-**Respostas:**
-- `204 No Content` — senha alterada com sucesso
-- `401 Unauthorized` — senha atual incorreta
-- `404 Not Found` — usuário não encontrado
-
----
-
-#### Validar login
-```
-POST /v1/usuarios/login
-```
-**Body:**
-```json
-{
-  "login": "rrodriguez",
-  "senha": "password123"
-}
-```
-**Respostas:**
-- `200 OK` — credenciais válidas, retorna token JWT Bearer (expira em 30 minutos)
-- `401 Unauthorized` — login ou senha incorretos
-
----
-
-### Formato de erro padrão (RFC 7807)
-
-Todos os erros seguem o padrão **RFC 7807 - Problem Details for HTTP APIs**:
-
-```json
-{
-  "type": "https://api.gastrohub.com/errors/usuario-nao-encontrado",
-  "title": "Usuário não encontrado",
-  "status": 404,
-  "detail": "Usuário com ID 99 não encontrado"
-}
-```
-
-Para erros de validação (`400`), há um campo adicional com os erros por campo:
-```json
-{
-  "type": "https://api.gastrohub.com/errors/validacao",
-  "title": "Erro de validação",
-  "status": 400,
-  "detail": "Erro de validação nos campos",
-  "erros": {
-    "email": "Email inválido",
-    "senha": "Senha deve ter no mínimo 6 caracteres"
-  }
-}
-```
-
-**Campos do ProblemDetail:**
-- `type` — URI que identifica o tipo de erro
-- `title` — Título legível do erro
-- `status` — Código HTTP
-- `detail` — Descrição detalhada do erro
-- `erros` (opcional) — Mapa de erros por campo em validações
-
----
-
-## Regras de Negócio
-
-- A **senha nunca é retornada** nas respostas da API
-- A senha é armazenada com **hash Argon2id** — nunca em texto puro
-- **Login é único** por usuário — tentativa de duplicata retorna `409`
-- **E-mail é único** por usuário — tentativa de duplicata retorna `409`
-- Para trocar a senha, é obrigatório informar a **senha atual correta**
-- Campos `null` não são incluídos nas respostas JSON
-- Endpoints protegidos exigem **token JWT Bearer** — obtido no login (expira em 30 minutos)
-- Sem token → `401 Unauthorized`
-- **Não é permitido criar usuários do tipo `ADMIN` via API** — tentativa retorna `400 Bad Request`
-- O usuário `ADMIN` é provisionado automaticamente na inicialização do banco (login: `admin`, senha: `admin123`) e tem acesso irrestrito a todos os endpoints
-
----
-
-## Pré-requisitos
-
-Antes de executar o projeto, certifique-se de ter instalados:
-
-- [Docker](https://www.docker.com/) e [Docker Compose](https://docs.docker.com/compose/)
-- [Java 21](https://adoptium.net/) — necessário apenas para rodar sem Docker
-- [Maven 3.9+](https://maven.apache.org/) — necessário apenas para rodar sem Docker
 
 ---
 
 ## Como Executar
 
-### Opção 1 — Apenas o banco (desenvolvimento local)
-
-Sobe somente o PostgreSQL. A aplicação é executada diretamente na sua máquina.
+**Pré-requisito:** Docker instalado.
 
 ```bash
-# 1. Subir o banco de dados
-docker-compose up -d postgres
+# Subir banco + aplicação
+docker-compose up -d
 
-# 2. Executar a aplicação
+# Apenas o banco (para rodar a aplicação localmente)
+docker-compose up -d postgres
 mvn spring-boot:run
 ```
 
-A aplicação estará disponível em: `http://localhost:8080`
+Aplicação disponível em: `http://localhost:8080`
 
----
-
-### Opção 2 — Ambiente completo com Docker
-
-Sobe o banco **e** a aplicação em containers.
-
+Para parar:
 ```bash
-docker-compose up -d
-```
-
-Aguarde alguns segundos para o container da aplicação iniciar após o banco estar saudável.
-
-A aplicação estará disponível em: `http://localhost:8080`
-
----
-
-### Derrubar o ambiente
-
-```bash
-# Parar os containers (mantém os dados)
-docker-compose down
-
-# Parar e remover os dados do banco
-docker-compose down -v
+docker-compose down        # mantém os dados
+docker-compose down -v     # apaga os dados do banco
 ```
 
 ---
 
-### Executar os testes
+## Endpoints
 
-```bash
-mvn test
-```
+Base URL: `http://localhost:8080/v1`
 
----
+> Endpoints marcados com 🔒 exigem `Authorization: Bearer <token>` — obtido no login.
 
-### Build do projeto
+| Método | Rota | Descrição |
+|---|---|---|
+| POST | `/usuarios` | Criar usuário (público) |
+| POST | `/usuarios/login` | Obter token JWT (público) |
+| GET | `/usuarios` | Listar usuários 🔒 |
+| GET | `/usuarios/{id}` | Buscar por ID 🔒 |
+| GET | `/usuarios/buscar?nome=X` | Buscar por nome 🔒 |
+| PUT | `/usuarios/{id}` | Atualizar dados 🔒 |
+| PATCH | `/usuarios/{id}/senha` | Trocar senha 🔒 |
+| DELETE | `/usuarios/{id}` | Excluir usuário 🔒 |
 
-```bash
-mvn clean package
-```
-
-O JAR gerado estará em `target/gastrohub-1.0.0.jar`.
+Documentação completa com exemplos: `http://localhost:8080/swagger-ui/index.html`
 
 ---
 
 ## Variáveis de Ambiente
 
-A aplicação suporta as seguintes variáveis de ambiente para customização (com valores padrão para desenvolvimento local):
-
 | Variável | Padrão | Descrição |
 |---|---|---|
-| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5435/gastrohub` | URL de conexão com o banco |
+| `JWT_SEGREDO` | *(obrigatório)* | Chave para assinatura dos tokens JWT |
+| `ADMIN_SENHA` | `admin123` | Senha do administrador provisionado na inicialização |
+| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5435/techchallenge` | URL do banco |
 | `SPRING_DATASOURCE_USERNAME` | `postgres` | Usuário do banco |
 | `SPRING_DATASOURCE_PASSWORD` | `postgres` | Senha do banco |
-| `SPRING_JPA_HIBERNATE_DDL_AUTO` | `update` | Estratégia de criação do schema |
 
-> O Docker Compose já configura essas variáveis automaticamente para comunicação entre containers.
+> O Docker Compose já define essas variáveis automaticamente. Em produção, `JWT_SEGREDO` deve ser definido explicitamente.
 
 ---
 
 ## Testes
 
-O projeto possui **49 testes automatizados** divididos em:
-
-| Tipo | Classe | Descrição |
-|---|---|---|
-| Unitário | `UsuarioServiceTest` | Testa as regras de negócio isoladas com Mockito |
-| Integração (MVC) | `UsuarioControllerTest` | Testa os endpoints HTTP com MockMvc |
-| Integração (contexto) | `GastroHubApplicationTest` | Verifica se o contexto Spring sobe corretamente |
-
-Os testes utilizam **H2 in-memory** e não dependem de Docker ou PostgreSQL.
-
 ```bash
 mvn test
 ```
 
-Resultado esperado:
-```
-Tests run: 49, Failures: 0, Errors: 0, Skipped: 0
-BUILD SUCCESS
-```
+40 testes automatizados (unitários + integração MVC). Utilizam H2 in-memory — sem necessidade de Docker ou PostgreSQL.
 
 ---
 
-## Documentação Interativa (Swagger)
+## Postman
 
-Com a aplicação rodando, acesse:
-
-```
-http://localhost:8080/swagger-ui/index.html
-```
-
-A interface permite visualizar e testar todos os endpoints diretamente pelo navegador, sem necessidade de ferramentas externas.
-
-O JSON da especificação OpenAPI está disponível em:
-```
-http://localhost:8080/v3/api-docs
-```
-
----
-
-## Collection Postman
-
-O arquivo `postman/gastrohub-fase1.postman_collection.json` contém uma collection pronta com **14 requisições** cobrindo todos os endpoints e principais cenários de erro.
-
-### Como importar
-
-1. Abra o Postman
-2. Clique em **File → Import** (ou `Ctrl+I`)
-3. Selecione o arquivo `postman/gastrohub-fase1.postman_collection.json`
-4. A collection **"GastroHub - Fase 1 | Usuários"** estará disponível
-
-### Fluxo sugerido de teste
-
-1. **Criar usuário** (`POST /usuarios`) — cria um usuário e salva o ID retornado
-2. **Validar login** (`POST /usuarios/login`) — confirma as credenciais
-3. **Buscar por ID** (`GET /usuarios/{id}`) — busca os dados do usuário
-4. **Atualizar dados** (`PUT /usuarios/{id}`) — altera nome e/ou e-mail
-5. **Trocar senha** (`PATCH /usuarios/{id}/senha`) — altera a senha
-6. **Excluir usuário** (`DELETE /usuarios/{id}`) — remove o usuário
-
----
-
-## Estrutura do Projeto
-
-```
-.
-├── Dockerfile                          # Build multi-stage (Maven + JRE Alpine)
-├── docker-compose.yml                  # Orquestração de containers
-├── pom.xml                             # Dependências e build Maven
-├── postman/
-│   └── gastrohub-fase1.postman_collection.json
-└── src/
-    ├── main/
-    │   ├── java/br/com/gastrohub/
-    │   │   ├── GastroHubApplication.java
-    │   │   ├── config/
-    │   │   │   ├── OpenApiConfig.java
-    │   │   │   └── SegurancaConfig.java
-    │   │   ├── controller/
-    │   │   │   └── UsuarioController.java
-    │   │   ├── dto/
-    │   │   │   ├── request/
-    │   │   │   │   ├── AtualizarUsuarioRequest.java
-    │   │   │   │   ├── CriarUsuarioRequest.java
-    │   │   │   │   ├── TrocarSenhaRequest.java
-    │   │   │   │   └── ValidarLoginRequest.java
-    │   │   │   └── response/
-    │   │   │       └── UsuarioResponse.java
-    │   │   ├── entity/
-    │   │   │   └── Usuario.java
-    │   │   ├── enums/
-    │   │   │   └── TipoUsuarioEnum.java
-    │   │   ├── exception/
-    │   │   │   ├── DadosJaCadastradosException.java
-    │   │   │   ├── GlobalExceptionHandler.java
-    │   │   │   ├── LoginOuSenhaInvalidosException.java
-    │   │   │   ├── SenhaAtualInvalidaException.java
-    │   │   │   └── UsuarioNaoEncontradoException.java
-    │   │   ├── repository/
-    │   │   │   └── UsuarioRepository.java
-    │   │   └── service/
-    │   │       ├── UsuarioService.java
-    │   │       └── UsuarioServiceImpl.java
-    │   └── resources/
-    │       └── application.properties
-    └── test/
-        ├── java/br/com/gastrohub/
-        │   ├── GastroHubApplicationTest.java
-        │   ├── controller/
-        │   │   └── UsuarioControllerTest.java
-        │   └── service/
-        │       └── UsuarioServiceTest.java
-        └── resources/
-            └── application-test.properties
-```
+Importe `postman/gastrohub-fase1.postman_collection.json` para ter acesso a 14 requisições cobrindo todos os endpoints e principais cenários de erro.

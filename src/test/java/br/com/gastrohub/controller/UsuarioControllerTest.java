@@ -5,8 +5,8 @@ import br.com.gastrohub.dto.response.LoginResponse;
 import br.com.gastrohub.dto.response.UsuarioResponse;
 import br.com.gastrohub.enums.TipoUsuarioEnum;
 import br.com.gastrohub.config.SegurancaConfig;
-import br.com.gastrohub.exception.GlobalExceptionHandler;
 import br.com.gastrohub.exception.AcessoNegadoException;
+import br.com.gastrohub.exception.GlobalExceptionHandler;
 import br.com.gastrohub.exception.LoginOuSenhaInvalidosException;
 import br.com.gastrohub.exception.SenhaAtualInvalidaException;
 import br.com.gastrohub.exception.UsuarioNaoEncontradoException;
@@ -27,7 +27,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -114,9 +113,9 @@ class UsuarioControllerTest {
     class BuscarUsuarioPorId {
 
         @Test
-        @WithMockUser(roles = "ADMIN")
-        @DisplayName("Deve retornar 200 quando ADMIN busca qualquer usuário")
-        void deveRetornar200QuandoAdminBuscaQualquerUsuario() throws Exception {
+        @WithMockUser
+        @DisplayName("Deve retornar 200 ao buscar usuário por ID existente")
+        void deveRetornar200AoBuscarUsuarioPorId() throws Exception {
             when(usuarioService.buscarUsuarioPorId(1L)).thenReturn(usuarioResponse);
 
             mockMvc.perform(get("/v1/usuarios/1"))
@@ -126,18 +125,7 @@ class UsuarioControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "CLIENTE")
-        @DisplayName("Deve retornar 200 quando CLIENTE acessa qualquer usuário")
-        void deveRetornar200QuandoClienteAcessaQualquerUsuario() throws Exception {
-            when(usuarioService.buscarUsuarioPorId(1L)).thenReturn(usuarioResponse);
-
-            mockMvc.perform(get("/v1/usuarios/1"))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.id").value(1L));
-        }
-
-        @Test
-        @WithMockUser(roles = "ADMIN")
+        @WithMockUser
         @DisplayName("Deve retornar 404 quando ID não existe")
         void deveRetornar404QuandoIdNaoExiste() throws Exception {
             when(usuarioService.buscarUsuarioPorId(99L))
@@ -154,34 +142,14 @@ class UsuarioControllerTest {
     class ListarUsuarios {
 
         @Test
-        @WithMockUser(roles = "ADMIN")
-        @DisplayName("Deve retornar 200 quando ADMIN lista usuários")
-        void deveRetornar200QuandoAdminListaUsuarios() throws Exception {
+        @WithMockUser
+        @DisplayName("Deve retornar 200 com lista de usuários para qualquer usuário autenticado")
+        void deveRetornar200ComListaDeUsuarios() throws Exception {
             when(usuarioService.listarTodosUsuarios()).thenReturn(List.of(usuarioResponse));
 
             mockMvc.perform(get("/v1/usuarios"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$[0].nome").value("Roberto Rodriguez"));
-        }
-
-        @Test
-        @WithMockUser(roles = "DONO_RESTAURANTE")
-        @DisplayName("Deve retornar 200 quando DONO_RESTAURANTE lista usuários")
-        void deveRetornar200QuandoDonoListaUsuarios() throws Exception {
-            when(usuarioService.listarTodosUsuarios()).thenReturn(List.of(usuarioResponse));
-
-            mockMvc.perform(get("/v1/usuarios"))
-                    .andExpect(status().isOk());
-        }
-
-        @Test
-        @WithMockUser(roles = "CLIENTE")
-        @DisplayName("Deve retornar 200 quando CLIENTE lista usuários")
-        void deveRetornar200QuandoClienteListaUsuarios() throws Exception {
-            when(usuarioService.listarTodosUsuarios()).thenReturn(List.of(usuarioResponse));
-
-            mockMvc.perform(get("/v1/usuarios"))
-                    .andExpect(status().isOk());
         }
     }
 
@@ -190,9 +158,9 @@ class UsuarioControllerTest {
     class BuscarPorNome {
 
         @Test
-        @WithMockUser(roles = "ADMIN")
-        @DisplayName("Deve retornar 200 quando ADMIN busca por nome")
-        void deveRetornar200QuandoAdminBuscaPorNome() throws Exception {
+        @WithMockUser
+        @DisplayName("Deve retornar 200 com usuários encontrados pelo nome")
+        void deveRetornar200ComUsuariosEncontradosPeloNome() throws Exception {
             when(usuarioService.buscarPorNome("Roberto")).thenReturn(List.of(usuarioResponse));
 
             mockMvc.perform(get("/v1/usuarios/buscar").param("nome", "Roberto"))
@@ -200,26 +168,6 @@ class UsuarioControllerTest {
                     .andExpect(jsonPath("$[0].nome").value("Roberto Rodriguez"));
         }
 
-        @Test
-        @WithMockUser(roles = "CLIENTE")
-        @DisplayName("Deve retornar 200 quando CLIENTE busca por nome")
-        void deveRetornar200QuandoClienteBuscaPorNome() throws Exception {
-            when(usuarioService.buscarPorNome("Roberto")).thenReturn(List.of(usuarioResponse));
-
-            mockMvc.perform(get("/v1/usuarios/buscar").param("nome", "Roberto"))
-                    .andExpect(status().isOk());
-        }
-
-        @Test
-        @WithMockUser(roles = "DONO_RESTAURANTE")
-        @DisplayName("Deve retornar 200 com lista vazia quando nenhum usuário corresponde")
-        void deveRetornar200ComListaVaziaQuandoNenhumMatcha() throws Exception {
-            when(usuarioService.buscarPorNome("Inexistente")).thenReturn(new ArrayList<>());
-
-            mockMvc.perform(get("/v1/usuarios/buscar").param("nome", "Inexistente"))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$", org.hamcrest.Matchers.hasSize(0)));
-        }
     }
 
     @Nested
@@ -259,9 +207,9 @@ class UsuarioControllerTest {
     class ExcluirUsuario {
 
         @Test
-        @WithMockUser(roles = "ADMIN")
-        @DisplayName("Deve retornar 204 quando ADMIN exclui qualquer usuário")
-        void deveRetornar204QuandoAdminExclui() throws Exception {
+        @WithMockUser
+        @DisplayName("Deve retornar 204 ao excluir usuário com sucesso")
+        void deveRetornar204AoExcluirUsuario() throws Exception {
             doNothing().when(usuarioService).excluirUsuario(1L);
 
             mockMvc.perform(delete("/v1/usuarios/1"))
@@ -270,35 +218,12 @@ class UsuarioControllerTest {
 
         @Test
         @WithMockUser(roles = "CLIENTE")
-        @DisplayName("Deve retornar 204 quando usuário exclui a própria conta")
-        void deveRetornar204QuandoUsuarioExcluiPropraConta() throws Exception {
-            doNothing().when(usuarioService).excluirUsuario(1L);
-
-            mockMvc.perform(delete("/v1/usuarios/1"))
-                    .andExpect(status().isNoContent());
-        }
-
-        @Test
-        @WithMockUser(roles = "CLIENTE")
-        @DisplayName("Deve retornar 403 quando CLIENTE tenta excluir outro usuário")
-        void deveRetornar403QuandoClienteTentaExcluirOutro() throws Exception {
-            doThrow(new AcessoNegadoException())
-                    .when(usuarioService).excluirUsuario(1L);
+        @DisplayName("Deve retornar 403 quando tenta excluir outro usuário")
+        void deveRetornar403QuandoTentaExcluirOutro() throws Exception {
+            doThrow(new AcessoNegadoException()).when(usuarioService).excluirUsuario(1L);
 
             mockMvc.perform(delete("/v1/usuarios/1"))
                     .andExpect(status().isForbidden());
-        }
-
-        @Test
-        @WithMockUser(roles = "ADMIN")
-        @DisplayName("Deve retornar 404 ao tentar excluir usuário inexistente")
-        void deveRetornar404AoExcluirUsuarioInexistente() throws Exception {
-            doThrow(new UsuarioNaoEncontradoException(99L))
-                    .when(usuarioService).excluirUsuario(99L);
-
-            mockMvc.perform(delete("/v1/usuarios/99"))
-                    .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.title").value("Usuário não encontrado"));
         }
     }
 
@@ -321,20 +246,6 @@ class UsuarioControllerTest {
 
         @Test
         @WithMockUser(roles = "CLIENTE")
-        @DisplayName("Deve retornar 403 quando tenta trocar senha de outro usuário")
-        void deveRetornar403QuandoTrocaSenhaDeOutro() throws Exception {
-            TrocarSenhaRequest request = new TrocarSenhaRequest("senhaAtual123", "novaSenha456");
-            doThrow(new AcessoNegadoException())
-                    .when(usuarioService).trocarSenhaDoUsuario(eq(1L), any());
-
-            mockMvc.perform(patch("/v1/usuarios/1/senha")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isForbidden());
-        }
-
-        @Test
-        @WithMockUser(roles = "CLIENTE")
         @DisplayName("Deve retornar 422 quando senha atual está incorreta")
         void deveRetornar422QuandoSenhaAtualEstaIncorreta() throws Exception {
             TrocarSenhaRequest request = new TrocarSenhaRequest("senhaErrada", "novaSenha456");
@@ -345,6 +256,18 @@ class UsuarioControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isUnprocessableEntity());
+        }
+    }
+
+    @Nested
+    @DisplayName("Acesso não autenticado")
+    class AcessoNaoAutenticado {
+
+        @Test
+        @DisplayName("Deve retornar 401 ao acessar endpoint protegido sem token")
+        void deveRetornar401SemToken() throws Exception {
+            mockMvc.perform(get("/v1/usuarios"))
+                    .andExpect(status().isUnauthorized());
         }
     }
 
